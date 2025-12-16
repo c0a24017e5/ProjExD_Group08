@@ -32,8 +32,16 @@ BOSS_APPEAR_INTERVAL = 150
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 class Player(pygame.sprite.Sprite):
-    """自機クラス"""
-    def __init__(self, p_type=0):
+    """
+    自機クラス
+    プレイヤーのタイプによって性能を変更可能
+    """
+    def __init__(self, p_type:int =0 ) -> None:
+        """
+        プレイヤーの設定
+        
+        引数 p_type: プレイヤーのタイプ
+        """
         super().__init__()
         self.p_type = p_type # 0:TypeA, 1:TypeB
         self.image = pygame.Surface((30, 30))
@@ -54,7 +62,11 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50)
         self.last_shot_time = 0
 
-    def update(self):
+    def update(self) -> None:
+        """
+        自機の移動処理
+        Shiftキーで低速化
+        """
         keys = pygame.key.get_pressed()
         # Shiftキーを押している間は低速移動（東方風）
         current_speed = self.speed
@@ -70,7 +82,10 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_DOWN] and self.rect.bottom < SCREEN_HEIGHT:
             self.rect.y += current_speed
 
-    def shoot(self):
+    def shoot(self) -> None:
+        """
+        プレイヤーの射撃処理
+        """
         now = pygame.time.get_ticks()
         if now - self.last_shot_time > self.shoot_interval:
             # 3WAY弾
@@ -87,8 +102,16 @@ class Player(pygame.sprite.Sprite):
             self.last_shot_time = now
 
 class Enemy(pygame.sprite.Sprite):
-    """ザコ敵クラス"""
-    def __init__(self, enemy_type):
+    """
+    ザコ敵クラス
+    タイプに応じて動作を変更
+    """
+    def __init__(self, enemy_type: int) -> None:
+        """
+        敵の設定
+        
+        引数 enemy_type:敵の種類
+        """
         super().__init__()
         self.enemy_type = enemy_type
         self.image = pygame.Surface((30, 30))
@@ -109,7 +132,10 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.x = random.randrange(0, SCREEN_WIDTH - self.rect.width)
         self.rect.y = -50
 
-    def update(self):
+    def update(self) -> None:
+        """
+        敵の挙動処理
+        """
         self.rect.y += self.speed_y
 
         if self.enemy_type == ENEMY_TYPE_WAVY:
@@ -124,7 +150,10 @@ class Enemy(pygame.sprite.Sprite):
         if self.rect.top > SCREEN_HEIGHT:
             self.kill()
 
-    def shoot_at_player(self):
+    def shoot_at_player(self) -> None:
+        """
+        プレイヤーに狙い撃ちする弾を発射
+        """
         dx = player.rect.centerx - self.rect.centerx
         dy = player.rect.centery - self.rect.centery
         angle = math.atan2(dy, dx)
@@ -136,8 +165,15 @@ class Enemy(pygame.sprite.Sprite):
         enemy_bullets.add(bullet)
 
 class Boss(pygame.sprite.Sprite):
-    """ボスクラス"""
-    def __init__(self, level=1):
+    """
+    ボスクラス
+    """
+    def __init__(self, level:int =1) -> None:
+        """
+        ボスの設定
+        
+        引数 level: ボスのレベル(HPや弾幕の強度に影響)
+        """
         super().__init__()
         self.image = pygame.Surface((60, 60))
         self.image.fill(PURPLE)
@@ -150,7 +186,10 @@ class Boss(pygame.sprite.Sprite):
         self.angle = 0
         self.timer = 0
 
-    def update(self):
+    def update(self) -> None:
+        """
+        ボスの行動更新
+        """
         if self.state == "entry":
             self.rect.y += 2
             if self.rect.y >= 100:
@@ -163,7 +202,10 @@ class Boss(pygame.sprite.Sprite):
             if self.timer % 5 == 0:
                 self.shoot_danmaku()
 
-    def shoot_danmaku(self):
+    def shoot_danmaku(self) -> None:
+        """
+        回転弾幕を発射
+        """
         self.angle += 12
         bullet_speed = 4
         for i in range(0, 360, 90):
@@ -175,8 +217,19 @@ class Boss(pygame.sprite.Sprite):
             enemy_bullets.add(bullet)
 
 class Bullet(pygame.sprite.Sprite):
-    """弾クラス"""
-    def __init__(self, x, y, vy, vx=0, is_player_bullet=True, p_type=0):
+    """
+    弾クラス
+    自機と敵の弾を共通で管理
+    """
+    def __init__(self, x:float, y:float, vy:float, vx:float =0, is_player_bullet:bool =True, p_type:int =0) -> None:
+        """
+        弾の設定
+        
+        引数 x,y: 弾の座標
+        引数 vy,vx: 弾の速度
+        引数 is_player_bullet: プレイヤーの弾かどうか
+        引数 p_type: プレイヤーのタイプ
+        """
         super().__init__()
         size = 10 if is_player_bullet else 8
         self.image = pygame.Surface((size, size))
@@ -195,6 +248,9 @@ class Bullet(pygame.sprite.Sprite):
         self.vx = vx
 
     def update(self):
+        """
+        弾の移動処理と画面外削除
+        """
         self.rect.y += self.vy
         self.rect.x += self.vx
         if self.rect.bottom < -50 or self.rect.top > SCREEN_HEIGHT + 50 or \
@@ -204,7 +260,7 @@ class Bullet(pygame.sprite.Sprite):
 # --- 3. ゲーム初期化 ---
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("シューティングゲーム")
+pygame.display.set_caption("東方風シューティング")
 clock = pygame.time.Clock()
 
 # フォント設定
@@ -262,7 +318,7 @@ while running:
                     selected_char_idx = 0 # Type A
                 elif event.key == pygame.K_RIGHT:
                     selected_char_idx = 1 # Type B
-                elif event.key == pygame.K_SPACE or event.key == pygame.K_z:
+                elif event.key in [pygame.K_SPACE, pygame.K_z]:
                     # ゲーム開始初期化処理
                     all_sprites.empty()
                     enemies.empty()
@@ -288,11 +344,12 @@ while running:
                 current_state = GAME_STATE_TITLE
 
     # --- 更新処理 ---
-    if current_state == GAME_STATE_PLAYING:
+    if current_state == GAME_STATE_PLAYING and player:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_z]:
             player.shoot()
 
+        # ボス出現条件
         if not is_boss_active and score >= next_boss_score:
             is_boss_active = True
             boss = Boss(boss_level)
@@ -302,6 +359,7 @@ while running:
                 score += 10
                 e.kill()
 
+        # 通常敵の出現
         if not is_boss_active:
             if random.random() < 0.03: 
                 t_type = random.choice([ENEMY_TYPE_NORMAL, ENEMY_TYPE_WAVY, ENEMY_TYPE_SHOOTER])
@@ -328,6 +386,7 @@ while running:
                     boss_level += 1
                     next_boss_score = score + BOSS_APPEAR_INTERVAL
 
+        # 被弾
         if pygame.sprite.spritecollide(player, enemies, False) or \
            pygame.sprite.spritecollide(player, enemy_bullets, False) or \
            pygame.sprite.spritecollide(player, boss_group, False):
