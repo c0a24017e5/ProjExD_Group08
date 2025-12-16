@@ -262,7 +262,7 @@ while running:
                     selected_char_idx = 0 # Type A
                 elif event.key == pygame.K_RIGHT:
                     selected_char_idx = 1 # Type B
-                elif event.key == pygame.K_SPACE or event.key == pygame.K_z:
+                elif event.key == event.key == pygame.K_z:
                     # ゲーム開始初期化処理
                     all_sprites.empty()
                     enemies.empty()
@@ -369,7 +369,7 @@ while running:
         else:
             pygame.draw.rect(screen, YELLOW, rect_b, 5)
 
-        guide_text = small_font.render("← → で選択 / Z or SPACE で決定", True, YELLOW)
+        guide_text = small_font.render("← → で選択 / Z で決定", True, YELLOW)
         screen.blit(guide_text, (SCREEN_WIDTH//2 - guide_text.get_width()//2, SCREEN_HEIGHT - 100))
 
     elif current_state == GAME_STATE_PLAYING:
