@@ -483,26 +483,38 @@ while running:
         screen.blit(sel_title, (SCREEN_WIDTH//2 - sel_title.get_width()//2, 100))
         
         # キャラクターのプレビュー描画（四角形を表示）
+        box_width = 100
+        box_height = 100
+        spacing = 180
+        center_y = SCREEN_HEIGHT // 2 - 50
+        center_x = SCREEN_WIDTH // 2
+
+        rect_positions = [
+            center_x - spacing - box_width//2,
+            center_x - box_width//2,
+            center_x + spacing - box_width//2
+        ]
+
         # Type A
         color_a = BLUE if selected_char_idx == 0 else (50, 50, 100)
-        rect_a = pygame.Rect(SCREEN_WIDTH//2 - 250, SCREEN_HEIGHT//2 - 50, 100, 100)
+        rect_a = pygame.Rect(rect_positions[0], center_y, 100, 100)
         pygame.draw.rect(screen, color_a, rect_a)
-        name_a = small_font.render("Type A: バランス", True, WHITE)
-        screen.blit(name_a, (SCREEN_WIDTH//2 - 250, SCREEN_HEIGHT//2 + 60))
+        name_a = small_font.render("TypeA:バランス", True, WHITE)
+        screen.blit(name_a, (rect_a.centerx - name_a.get_width()//2, rect_a.bottom + 10))
 
         # Type B
         color_b = RED if selected_char_idx == 1 else (100, 50, 50)
-        rect_b = pygame.Rect(SCREEN_WIDTH//2 - 50, SCREEN_HEIGHT//2 - 50, 100, 100)
+        rect_b = pygame.Rect(rect_positions[1], center_y, 100, 100)
         pygame.draw.rect(screen, color_b, rect_b)
-        name_b = small_font.render("Type B: 高速移動", True, WHITE)
-        screen.blit(name_b, (SCREEN_WIDTH//2 - 50, SCREEN_HEIGHT//2 + 60))
+        name_b = small_font.render("TypeB:高速移動", True, WHITE)
+        screen.blit(name_b, (rect_b.centerx - name_b.get_width()//2, rect_b.bottom + 10))
         
         # Type C
         color_c = YELLOW if selected_char_idx == 2 else (100, 100, 50)
-        rect_c = pygame.Rect(SCREEN_WIDTH//2 + 150, SCREEN_HEIGHT//2 - 50, 100, 100)
+        rect_c = pygame.Rect(rect_positions[2], center_y, 100, 100)
         pygame.draw.rect(screen, color_c, rect_c)
-        name_c = small_font.render("Type C: 射撃切替", True, WHITE)
-        screen.blit(name_c, (SCREEN_WIDTH//2 + 150, SCREEN_HEIGHT//2 + 60))
+        name_c = small_font.render("TypeC:射撃切替", True, WHITE)
+        screen.blit(name_c, (rect_c.centerx - name_c.get_width()//2, rect_c.bottom + 10))
 
         # 選択枠の強調
         if selected_char_idx == 0:
