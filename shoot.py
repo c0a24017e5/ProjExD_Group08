@@ -33,26 +33,28 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # --- クラス定義 ---
 
 class Bullet(pygame.sprite.Sprite):
+
     """
     弾クラス（修正版）
     寿命(life)と近接属性(is_melee)を追加
     """
-    def __init__(self, x:float, y:float, vy:float, vx:float=0, 
-                 is_player_bullet:bool=True, color:tuple=WHITE, 
-                 size:int=0, life:int=0, is_melee:bool=False) -> None:
-        super().__init__()
+    def __init__(self, x:float, y:float, vy:float, vx:float=0, is_player_bullet:bool=True, color:tuple=WHITE, pierce=False, damage=1) -> None:
         """
         弾の設定
         引数 x,y: 弾の座標
         引数 vx,vy: 弾の速度
         引数 is_player_bullet: プレイヤーの弾かどうか
         引数 color: 弾の色
+        引数 pierce: 貫通判定の有無
+        引数 damge: ボスに与えるダメージ量
         """
         # sizeが指定されていなければデフォルト値を使う
         if size == 0:
             size = 10 if is_player_bullet else 8
             
         self.image = pygame.Surface((size, size))
+        self.damage = damage
+        self.pierce = pierce
         self.is_melee = is_melee # 近接攻撃かどうか
         self.life = life         # 寿命（フレーム数）。0なら無限（画面外まで）
         
@@ -122,10 +124,12 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_DOWN] and self.rect.bottom < SCREEN_HEIGHT:
             self.rect.y += current_speed
 
+
     def shoot(self) -> None:
         """
         子クラスでオーバーライド（上書き）するためのメソッド
         """
+
         pass
 
 class PlayerBalance(Player):
@@ -145,6 +149,8 @@ class PlayerBalance(Player):
         """
         バランス型の射撃機構
         """
+        if not keys[pygame.K_z]:
+            return
         now = pygame.time.get_ticks()
         if now - self.last_shot_time > self.shoot_interval:
             # 3WAY弾 (シアン)
@@ -175,6 +181,8 @@ class PlayerSpeed(Player):
         """
         高速移動型の射撃機構
         """
+        if not keys[pygame.K_z]:
+            return
         now = pygame.time.get_ticks()
         if now - self.last_shot_time > self.shoot_interval:
             # 3WAY弾 (少し赤い白)
@@ -187,6 +195,7 @@ class PlayerSpeed(Player):
                 all_sprites.add(bullet)
                 player_bullets.add(bullet)
             self.last_shot_time = now
+
 
 class PlayerShotgun(Player):
     """
@@ -249,6 +258,8 @@ class PlayerShotgun(Player):
         """
         ショットガン型の射撃機構
         """
+        if not keys[pygame.K_z]:
+            return
         now = pygame.time.get_ticks()
         if now - self.last_shot_time > self.shoot_interval:
             bullet_angles = [-20, -15, -10, -5, 0, 5, 10, 15, 20]
@@ -283,6 +294,8 @@ class PlayerReimu(Player):
         最も近い敵に向かって誘導弾を発射する。
         敵がいない場合は真上に発射する。
         """
+        if not keys[pygame.K_z]:
+            return
         now = pygame.time.get_ticks()
         # 前回の発射から一定時間経過しているか確認
         if now - self.last_shot_time > self.shoot_interval:
@@ -544,6 +557,8 @@ class PlayerSwitch(Player):
         """
         射撃モード切替型の射撃機構
         """
+        if not keys[pygame.K_z]:
+            return
         now = pygame.time.get_ticks()
         self.shoot_interval = 80 if self.shoot_mode == 2 else 20
         if now - self.last_shot_time > self.shoot_interval:
@@ -567,18 +582,79 @@ class PlayerSwitch(Player):
             self.shoot_mode = 1 if self.shoot_mode == 2 else 2
             self.last_toggle_time = now
 
+class PlayerCharge(Player):
+    """Type F: チャージショット型（水色）"""
+    def __init__(self):
+        super().__init__()
+        self.image.fill(CYAN)
+        self.speed = 5
+
+        # チャージ関連
+        self.is_charging = False
+        self.charge_time = 0
+        self.max_charge = 120  # フレーム上限
+
+    def shoot(self):
+        keys = pygame.key.get_pressed()
+
+        # Zキーが押されている間：チャージ
+        if keys[pygame.K_z]:
+            self.is_charging = True
+            self.charge_time = min(self.charge_time + 1, self.max_charge)
+
+        # Zキーを離した瞬間：発射
+        elif self.is_charging:
+            # 発射処理
+            power = self.charge_time
+            self.is_charging = False
+            self.charge_time = 0
+
+            #チャージ時間に応じて弾の性能を変える
+            damage = 1 + power // 5
+            size = 10 + power // 4
+            speed = 8 + power // 5
+
+            bullet_centers = [0, -15, 15]
+            for angle in bullet_centers:
+                rad = math.radians(angle)
+                vx = math.sin(rad) * speed
+                vy = -math.cos(rad) * speed
+                
+                bullet = Bullet(
+                    self.rect.centerx,
+                    self.rect.top,
+                    vy=vy,
+                    vx=vx,
+                    is_player_bullet=True,
+                    color=YELLOW,
+                    pierce=True,
+                    damage=damage
+                )
+
+            # 見た目強化（サイズ変更）
+                bullet.image = pygame.Surface((size, size))
+                bullet.image.fill(YELLOW)
+                bullet.rect = bullet.image.get_rect(center=bullet.rect.center)
+
+                all_sprites.add(bullet)
+                player_bullets.add(bullet)
+
+            # リセット
+            self.is_charging = False
+            self.charge_time = 0
+
 # ★★★ キャラクターリストの定義 ★★★
 # ここに辞書を追加していくだけで、選択肢が増えます
 CHAR_LIST = [
     {"name": "Type A: Balance", "desc": "バランス型", "color": BLUE,  "class": PlayerBalance},
     {"name": "Type B: Speed",   "desc": "高速移動型", "color": RED,   "class": PlayerSpeed},
     {"name": "Type C: Shotgun", "desc": "広範囲攻撃", "color": GREEN, "class": PlayerShotgun},
-    {"name": "Type D: Melee",   "desc": "近接斬撃(弾消し)", "color": YELLOW, "class": PlayerMelee},
-    {"name": "Type E: Reimu", "desc": "誘導弾幕", "color": WHITE, "class": PlayerReimu},
-    {"name": "Type F: Switch", "desc": "射撃切替", "color": PURPLE, "class": PlayerSwitch},
+    {"name": "Type D: Reimu", "desc": "誘導弾幕", "color": WHITE, "class": PlayerReimu},
+    {"name": "Type E: Switch", "desc": "射撃切替", "color": YELLOW, "class": PlayerSwitch},
+    {"name": "Type F: Charge", "desc": "チャージ攻撃", "color": CYAN, "class" :PlayerCharge}
+    {"name": "Type G: Melee",   "desc": "近接斬撃(弾消し)", "color": YELLOW, "class": PlayerMelee},
     # 例: {"name": "Type D: Power", "desc": "高火力", "color": PURPLE, "class": PlayerPower}, 
 ]
-
 
 class Enemy(pygame.sprite.Sprite):
     """
@@ -753,6 +829,7 @@ while running:
         # ■ キャラ選択画面
         elif current_state == GAME_STATE_SELECT:
             if event.type == pygame.KEYDOWN:
+
                 # ★ 左キー: インデックスを一つ戻す（余り計算でループ）
                 if event.key == pygame.K_LEFT:
                     selected_char_idx = (selected_char_idx - 1) % len(CHAR_LIST)
@@ -763,16 +840,19 @@ while running:
                 
                 # 決定
                 elif event.key == pygame.K_SPACE or event.key == pygame.K_z:
+
                     all_sprites.empty()
                     enemies.empty()
                     boss_group.empty()
                     player_bullets.empty()
                     enemy_bullets.empty()
                     
+
                     # リストからクラスを取り出してインスタンス化
                     PlayerClass = CHAR_LIST[selected_char_idx]["class"]
                     player = PlayerClass()
                     
+
                     all_sprites.add(player)
                     
                     score = 0
@@ -780,7 +860,7 @@ while running:
                     boss_level = 1
                     is_boss_active = False
                     current_state = GAME_STATE_PLAYING
-                if event.key == pygame.K_ESCAPE:
+                elif event.key == pygame.K_ESCAPE:
                     current_state = GAME_STATE_TITLE # 戻る
 
         # ■ ゲームオーバー画面
@@ -791,10 +871,12 @@ while running:
     # --- 更新処理 ---
     if current_state == GAME_STATE_PLAYING:
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_z]:
-            player.shoot()
+        player.shoot() #チャージ型との兼ね合いのため、shoot()が呼ばれ続けるようにして他の各クラスでzが押されてない状態では弾が出ないよう変更
         if isinstance(player, PlayerSwitch) and keys[pygame.K_x]:
             player.toggle_mode()
+
+
+
 
         if not is_boss_active and score >= next_boss_score:
             is_boss_active = True
@@ -814,9 +896,12 @@ while running:
         
         all_sprites.update()
 
-        hits = pygame.sprite.groupcollide(enemies, player_bullets, True, True)
-        for hit in hits:
+        hits = pygame.sprite.groupcollide(enemies, player_bullets, True, False) #弾はいったん消さない
+        for enemy, bullets in hits.items():
             score += 10
+            for bullet in bullets:
+                if not getattr(bullet, "pierce", False):
+                    bullet.kill()
         # ★追加: 近接攻撃(is_melee=True) vs 敵弾 の相殺処理
         # 1. まずプレイヤー弾の中から is_melee が True のものだけを抽出
         melee_bullets = [b for b in player_bullets if hasattr(b, 'is_melee') and b.is_melee]
@@ -837,7 +922,7 @@ while running:
             boss_hits = pygame.sprite.groupcollide(boss_group, player_bullets, False, True)
             for boss_sprite, bullets in boss_hits.items():
                 for b in bullets:
-                    boss_sprite.hp -= 1
+                    boss_sprite.hp -= b.damage
                     score += 1
                 if boss_sprite.hp <= 0:
                     score += 1000
