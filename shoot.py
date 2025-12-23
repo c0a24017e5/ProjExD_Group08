@@ -134,12 +134,12 @@ class PlayerShotgun(Player):
         super().__init__()
         self.image.fill(GREEN)
         self.speed = 4
-        self.shoot_interval = 110
+        self.shoot_interval = 200
 
     def shoot(self):
         now = pygame.time.get_ticks()
         if now - self.last_shot_time > self.shoot_interval:
-            bullet_angles = [-20, -10, 0, 10, 20]
+            bullet_angles = [-20, -15, -10, -5, 0, 5, 10, 15, 20]
             for angle in bullet_angles:
                 rad = math.radians(angle)
                 b_speed = 12
@@ -320,8 +320,7 @@ while running:
                     player_bullets.empty()
                     enemy_bullets.empty()
                     
-                    # ★ リストからクラスを取り出してインスタンス化
-                    # これにより if文の分岐が不要になります
+                    # リストからクラスを取り出してインスタンス化
                     PlayerClass = CHAR_LIST[selected_char_idx]["class"]
                     player = PlayerClass()
                     
@@ -332,6 +331,8 @@ while running:
                     boss_level = 1
                     is_boss_active = False
                     current_state = GAME_STATE_PLAYING
+                if event.key == pygame.K_ESCAPE:
+                    current_state = GAME_STATE_TITLE
                 if event.key == pygame.K_ESCAPE:
                     current_state = GAME_STATE_TITLE # 戻る
 
