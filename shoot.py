@@ -252,7 +252,7 @@ class Boss(pygame.sprite.Sprite):
 # --- 3. ゲーム初期化 ---
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("東方風シューティング")
+pygame.display.set_caption("シューティング")
 clock = pygame.time.Clock()
 
 try:
