@@ -241,6 +241,7 @@ class PlayerShotgun(Player):
         self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50)
         super().__init__()
         self.image.fill(GREEN)
+        
         self.speed = 4
         self.shoot_interval = 200
 
@@ -909,8 +910,6 @@ while running:
                 pygame.draw.rect(screen, WHITE, (100, 20, 400, 20), 2)
                 hp_text = small_font.render(f"Boss HP: {b.hp}", True, WHITE)
                 screen.blit(hp_text, (100, 45))
-
-    
 
     elif current_state == GAME_STATE_GAMEOVER:
         over_text = font.render("ゲームオーバー", True, RED)
